@@ -59,7 +59,7 @@ type Addr struct {
 	User     string
 	RepoName string
 	// TODO: Parse dir. e.g.) https://github.com/pocke/lemonade/tree/master/client
-	Dir string
+	// Dir string
 }
 
 func (a *Addr) ToSSH() string {
