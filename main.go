@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
 )
 
 func main() {
@@ -34,4 +35,73 @@ var Getters = map[string]func(addr string) error{
 	"go": func(addr string) error {
 		return nil
 	},
+}
+
+type Addr struct {
+	Host     string
+	User     string
+	RepoName string
+	// TODO: Parse dir. e.g.) https://github.com/pocke/lemonade/tree/master/client
+	Dir string
+}
+
+func ParseAddr(addrStr string) (*Addr, error) {
+	if addr := matchHTTPS(addrStr); addr != nil {
+		return addr, nil
+	}
+	if addr := matchSSH(addrStr); addr != nil {
+		return addr, nil
+	}
+	if addr := matchGoStyle(addrStr); addr != nil {
+		return addr, nil
+	}
+	return nil, fmt.Errorf("Can't parse %s as address", addrStr)
+}
+
+// TODO: DRY
+
+// https://github.com/pocke/get
+// https://github.com/pocke/get.git
+func matchHTTPS(addrStr string) *Addr {
+	re := regexp.MustCompile(`^https://([^/]+)/([^/]+)/([^/]+?)(?:\.git)?$`)
+	ma := re.FindStringSubmatch(addrStr)
+	if len(ma) == 0 {
+		return nil
+	}
+
+	return &Addr{
+		Host:     ma[1],
+		User:     ma[2],
+		RepoName: ma[3],
+	}
+}
+
+// git@github.com:pocke/get.git
+func matchSSH(addrStr string) *Addr {
+	re := regexp.MustCompile(`^git\@([^:]+):([^/]+)/(.+)\.git$`)
+	ma := re.FindStringSubmatch(addrStr)
+	if len(ma) == 0 {
+		return nil
+	}
+
+	return &Addr{
+		Host:     ma[1],
+		User:     ma[2],
+		RepoName: ma[3],
+	}
+}
+
+// github.com/pocke/get
+func matchGoStyle(addrStr string) *Addr {
+	re := regexp.MustCompile(`^([^/]+)/([^/]+)/([^/]+)$`)
+	ma := re.FindStringSubmatch(addrStr)
+	if len(ma) == 0 {
+		return nil
+	}
+
+	return &Addr{
+		Host:     ma[1],
+		User:     ma[2],
+		RepoName: ma[3],
+	}
 }
