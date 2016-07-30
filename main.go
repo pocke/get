@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"regexp"
 )
 
@@ -29,11 +30,27 @@ func Main(args []string) error {
 }
 
 var Getters = map[string]func(addr string) error{
-	"ghq": func(addr string) error {
-		return nil
+	"ghq": func(addrStr string) error {
+		addr, err := ParseAddr(addrStr)
+		if err != nil {
+			return err
+		}
+		c := exec.Command("ghq", "get", addr.ToSSH())
+		c.Stdin = os.Stdin
+		c.Stderr = os.Stderr
+		c.Stdout = os.Stdout
+		return c.Run()
 	},
-	"go": func(addr string) error {
-		return nil
+	"go": func(addrStr string) error {
+		addr, err := ParseAddr(addrStr)
+		if err != nil {
+			return err
+		}
+		c := exec.Command("go", "get", addr.ToGoStyle())
+		c.Stdin = os.Stdin
+		c.Stderr = os.Stderr
+		c.Stdout = os.Stdout
+		return c.Run()
 	},
 }
 
@@ -43,6 +60,14 @@ type Addr struct {
 	RepoName string
 	// TODO: Parse dir. e.g.) https://github.com/pocke/lemonade/tree/master/client
 	Dir string
+}
+
+func (a *Addr) ToSSH() string {
+	return fmt.Sprintf("git@%s:%s/%s.git", a.Host, a.User, a.RepoName)
+}
+
+func (a *Addr) ToGoStyle() string {
+	return fmt.Sprintf("%s/%s/%s", a.Host, a.User, a.RepoName)
 }
 
 func ParseAddr(addrStr string) (*Addr, error) {
