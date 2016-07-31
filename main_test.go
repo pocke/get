@@ -1,6 +1,72 @@
 package main
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
+
+func TestParseCmdArg_Simple(t *testing.T) {
+	args := []string{"get", "go", "github.com/pocke/get"}
+	c, err := ParseCmdArg(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Name != "get" {
+		t.Errorf("Name should be `get`, but got %s", c.Name)
+	}
+	if !reflect.DeepEqual(c.Options, []string{}) {
+		t.Errorf("Options should be empty, but got %v", c.Options)
+	}
+	if c.Type != "go" {
+		t.Errorf("Type should be `go`, but got %s", c.Type)
+	}
+	if !reflect.DeepEqual(c.Args, []string{"github.com/pocke/get"}) {
+		t.Errorf("Args should have an addr, but got %v", c.Args)
+	}
+}
+
+func TestParseCmdArg_DebugOption(t *testing.T) {
+	args := []string{"get", "--debug", "go", "github.com/pocke/get"}
+	c, err := ParseCmdArg(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Name != "get" {
+		t.Errorf("Name should be `get`, but got %s", c.Name)
+	}
+	if !reflect.DeepEqual(c.Options, []string{"--debug"}) {
+		t.Errorf("Options should have an option, but got %v", c.Options)
+	}
+	if c.Type != "go" {
+		t.Errorf("Type should be `go`, but got %s", c.Type)
+	}
+	if !reflect.DeepEqual(c.Args, []string{"github.com/pocke/get"}) {
+		t.Errorf("Args should have an addr, but got %v", c.Args)
+	}
+}
+
+func TestParseCmdArg_UpdateOption(t *testing.T) {
+	args := []string{"get", "--debug", "go", "-u", "github.com/pocke/get"}
+	c, err := ParseCmdArg(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Name != "get" {
+		t.Errorf("Name should be `get`, but got %s", c.Name)
+	}
+	if !reflect.DeepEqual(c.Options, []string{"--debug"}) {
+		t.Errorf("Options should have an option, but got %v", c.Options)
+	}
+	if c.Type != "go" {
+		t.Errorf("Type should be `go`, but got %s", c.Type)
+	}
+	if !reflect.DeepEqual(c.Args, []string{"-u", "github.com/pocke/get"}) {
+		t.Errorf("Args should have some args, but got %v", c.Args)
+	}
+}
 
 func TestParseAddr_HTTPS(t *testing.T) {
 	addrStr := "https://github.com/pocke/get"

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 func main() {
@@ -15,38 +16,78 @@ func main() {
 }
 
 func Main(args []string) error {
-	if len(args) < 3 {
-		return fmt.Errorf("Too few arguments. Please `get TYPE ADDR`")
+	c, err := ParseCmdArg(args)
+	if err != nil {
+		return err
 	}
-	t := args[1]
-	addr := args[2]
 
-	fn, ok := Getters[t]
+	fn, ok := Getters[c.Type]
 	if !ok {
-		return fmt.Errorf("Type %s doesn't exist", t)
+		return fmt.Errorf("Type %s doesn't exist", c.Type)
 	}
 
-	return fn(addr)
+	return fn(c.Args)
 }
 
-var Getters = map[string]func(addr string) error{
-	"ghq": func(addrStr string) error {
-		addr, err := ParseAddr(addrStr)
-		if err != nil {
-			return err
+type CmdArg struct {
+	Name    string   // get
+	Options []string // [--debug -d]
+	Type    string   // go or ghq
+	Args    []string // [-u github.com/pocke/get]
+}
+
+func ParseCmdArg(args []string) (*CmdArg, error) {
+	if len(args) < 3 {
+		return nil, fmt.Errorf("Too few arguments. Please `get [-d] TYPE ADDR ...`")
+	}
+	cmdArg := new(CmdArg)
+	cmdArg.Name = args[0]
+
+	typeIdx := 0
+	for idx, v := range args[1:] {
+		if strings.HasPrefix(v, "-") {
+			continue
 		}
-		c := exec.Command("ghq", "get", addr.ToSSH())
+		typeIdx = idx + 1
+		break
+	}
+	// TODO: check index
+	cmdArg.Options = args[1:typeIdx]
+	cmdArg.Type = args[typeIdx]
+	cmdArg.Args = args[typeIdx+1:]
+
+	return cmdArg, nil
+}
+
+var Getters = map[string]func(addrs []string) error{
+	"ghq": func(addrs []string) error {
+		args := []string{"get"}
+		for _, a := range addrs {
+			addr, err := ParseAddr(a)
+			if err != nil {
+				args = append(args, a)
+			} else {
+				args = append(args, addr.ToSSH())
+			}
+		}
+
+		c := exec.Command("ghq", args...)
 		c.Stdin = os.Stdin
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
 		return c.Run()
 	},
-	"go": func(addrStr string) error {
-		addr, err := ParseAddr(addrStr)
-		if err != nil {
-			return err
+	"go": func(addrs []string) error {
+		args := []string{"get"}
+		for _, a := range addrs {
+			addr, err := ParseAddr(a)
+			if err != nil {
+				args = append(args, a)
+			} else {
+				args = append(args, addr.ToGoStyle())
+			}
 		}
-		c := exec.Command("go", "get", addr.ToGoStyle())
+		c := exec.Command("go", args...)
 		c.Stdin = os.Stdin
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
