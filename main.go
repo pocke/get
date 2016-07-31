@@ -26,14 +26,14 @@ func Main(args []string) error {
 		return fmt.Errorf("Type %s doesn't exist", c.Type)
 	}
 
-	return fn(c.Args)
+	return fn(c.Args, c.Debug)
 }
 
 type CmdArg struct {
-	Name    string   // get
-	Options []string // [--debug -d]
-	Type    string   // go or ghq
-	Args    []string // [-u github.com/pocke/get]
+	Name  string // get
+	Debug bool
+	Type  string   // go or ghq
+	Args  []string // [-u github.com/pocke/get]
 }
 
 func ParseCmdArg(args []string) (*CmdArg, error) {
@@ -52,15 +52,18 @@ func ParseCmdArg(args []string) (*CmdArg, error) {
 		break
 	}
 	// TODO: check index
-	cmdArg.Options = args[1:typeIdx]
+
+	opts := args[1:typeIdx]
+	cmdArg.Debug = includeString(opts, "-d") || includeString(opts, "--debug")
+
 	cmdArg.Type = args[typeIdx]
 	cmdArg.Args = args[typeIdx+1:]
 
 	return cmdArg, nil
 }
 
-var Getters = map[string]func(addrs []string) error{
-	"ghq": func(addrs []string) error {
+var Getters = map[string]func(addrs []string, debug bool) error{
+	"ghq": func(addrs []string, debug bool) error {
 		args := []string{"get"}
 		for _, a := range addrs {
 			addr, err := ParseAddr(a)
@@ -75,9 +78,12 @@ var Getters = map[string]func(addrs []string) error{
 		c.Stdin = os.Stdin
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
+		if debug {
+			fmt.Println(strings.Join(c.Args, " "))
+		}
 		return c.Run()
 	},
-	"go": func(addrs []string) error {
+	"go": func(addrs []string, debug bool) error {
 		args := []string{"get"}
 		for _, a := range addrs {
 			addr, err := ParseAddr(a)
@@ -91,6 +97,9 @@ var Getters = map[string]func(addrs []string) error{
 		c.Stdin = os.Stdin
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
+		if debug {
+			fmt.Println(strings.Join(c.Args, " "))
+		}
 		return c.Run()
 	},
 }
@@ -170,4 +179,13 @@ func matchGoStyle(addrStr string) *Addr {
 		User:     ma[2],
 		RepoName: ma[3],
 	}
+}
+
+func includeString(s []string, t string) bool {
+	for _, v := range s {
+		if v == t {
+			return true
+		}
+	}
+	return false
 }
