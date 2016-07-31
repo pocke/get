@@ -121,64 +121,30 @@ func (a *Addr) ToGoStyle() string {
 }
 
 func ParseAddr(addrStr string) (*Addr, error) {
-	if addr := matchHTTPS(addrStr); addr != nil {
-		return addr, nil
+	pats := []string{
+		// https://github.com/pocke/get
+		// https://github.com/pocke/get.git
+		`^https://([^/]+)/([^/]+)/([^/]+?)(?:\.git)?$`,
+		// git@github.com:pocke/get.git
+		`^git\@([^:]+):([^/]+)/(.+)\.git$`,
+		// github.com/pocke/get
+		`^([^/]+)/([^/]+)/([^/]+)$`,
 	}
-	if addr := matchSSH(addrStr); addr != nil {
-		return addr, nil
+	for _, p := range pats {
+		re := regexp.MustCompile(p)
+		ma := re.FindStringSubmatch(addrStr)
+		if len(ma) == 0 {
+			continue
+		}
+
+		return &Addr{
+			Host:     ma[1],
+			User:     ma[2],
+			RepoName: ma[3],
+		}, nil
 	}
-	if addr := matchGoStyle(addrStr); addr != nil {
-		return addr, nil
-	}
+
 	return nil, fmt.Errorf("Can't parse %s as address", addrStr)
-}
-
-// TODO: DRY
-
-// https://github.com/pocke/get
-// https://github.com/pocke/get.git
-func matchHTTPS(addrStr string) *Addr {
-	re := regexp.MustCompile(`^https://([^/]+)/([^/]+)/([^/]+?)(?:\.git)?$`)
-	ma := re.FindStringSubmatch(addrStr)
-	if len(ma) == 0 {
-		return nil
-	}
-
-	return &Addr{
-		Host:     ma[1],
-		User:     ma[2],
-		RepoName: ma[3],
-	}
-}
-
-// git@github.com:pocke/get.git
-func matchSSH(addrStr string) *Addr {
-	re := regexp.MustCompile(`^git\@([^:]+):([^/]+)/(.+)\.git$`)
-	ma := re.FindStringSubmatch(addrStr)
-	if len(ma) == 0 {
-		return nil
-	}
-
-	return &Addr{
-		Host:     ma[1],
-		User:     ma[2],
-		RepoName: ma[3],
-	}
-}
-
-// github.com/pocke/get
-func matchGoStyle(addrStr string) *Addr {
-	re := regexp.MustCompile(`^([^/]+)/([^/]+)/([^/]+)$`)
-	ma := re.FindStringSubmatch(addrStr)
-	if len(ma) == 0 {
-		return nil
-	}
-
-	return &Addr{
-		Host:     ma[1],
-		User:     ma[2],
-		RepoName: ma[3],
-	}
 }
 
 func includeString(s []string, t string) bool {
