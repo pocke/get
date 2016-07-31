@@ -15,8 +15,8 @@ func TestParseCmdArg_Simple(t *testing.T) {
 	if c.Name != "get" {
 		t.Errorf("Name should be `get`, but got %s", c.Name)
 	}
-	if !reflect.DeepEqual(c.Options, []string{}) {
-		t.Errorf("Options should be empty, but got %v", c.Options)
+	if c.Debug {
+		t.Errorf("Options should be empty, but got %v", c.Debug)
 	}
 	if c.Type != "go" {
 		t.Errorf("Type should be `go`, but got %s", c.Type)
@@ -36,8 +36,8 @@ func TestParseCmdArg_DebugOption(t *testing.T) {
 	if c.Name != "get" {
 		t.Errorf("Name should be `get`, but got %s", c.Name)
 	}
-	if !reflect.DeepEqual(c.Options, []string{"--debug"}) {
-		t.Errorf("Options should have an option, but got %v", c.Options)
+	if !c.Debug {
+		t.Errorf("Options should be empty, but got %v", c.Debug)
 	}
 	if c.Type != "go" {
 		t.Errorf("Type should be `go`, but got %s", c.Type)
@@ -57,8 +57,8 @@ func TestParseCmdArg_UpdateOption(t *testing.T) {
 	if c.Name != "get" {
 		t.Errorf("Name should be `get`, but got %s", c.Name)
 	}
-	if !reflect.DeepEqual(c.Options, []string{"--debug"}) {
-		t.Errorf("Options should have an option, but got %v", c.Options)
+	if !c.Debug {
+		t.Errorf("Options should be empty, but got %v", c.Debug)
 	}
 	if c.Type != "go" {
 		t.Errorf("Type should be `go`, but got %s", c.Type)

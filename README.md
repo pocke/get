@@ -3,6 +3,9 @@ get
 
 A wrapper of ghq and go.
 
+[![Build Status](https://travis-ci.org/pocke/get.svg?branch=master)](https://travis-ci.org/pocke/get)
+[![Coverage Status](https://coveralls.io/repos/github/pocke/get/badge.svg?branch=master)](https://coveralls.io/github/pocke/get?branch=master)
+
 
 Installation
 -----------

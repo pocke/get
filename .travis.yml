@@ -1,0 +1,15 @@
+language: go
+
+sudo: false
+
+go:
+  - 1.6
+  - tip
+
+# https://github.com/mattn/goveralls#github-integration
+before_install:
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci
