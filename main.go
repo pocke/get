@@ -129,6 +129,8 @@ func ParseAddr(addrStr string) (*Addr, error) {
 		{`^git\@([^:]+):([^/]+)/(.+)\.git$`, 1, 2, 3},
 		// github.com/pocke/get
 		{`^([^/]+)/([^/]+)/([^/]+)$`, 1, 2, 3},
+		// pocke/get
+		{`^([^/]+)/([^/]+)$`, -1, 1, 2},
 	}
 	for _, m := range mats {
 		addr := m.Parse(addrStr)
@@ -164,14 +166,17 @@ func (m *AddrMatcher) Parse(addrStr string) *Addr {
 		return nil
 	}
 
-	addr := new(Addr)
-	if m.HostIdx >= 0 {
+	addr := &Addr{
+		Host: "github.com",
+	}
+
+	if m.HostIdx > 0 {
 		addr.Host = ma[m.HostIdx]
 	}
-	if m.UserIdx >= 0 {
+	if m.UserIdx > 0 {
 		addr.User = ma[m.UserIdx]
 	}
-	if m.RepoNameIdx >= 0 {
+	if m.RepoNameIdx > 0 {
 		addr.RepoName = ma[m.RepoNameIdx]
 	}
 
