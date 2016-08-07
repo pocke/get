@@ -121,27 +121,21 @@ func (a *Addr) ToGoStyle() string {
 }
 
 func ParseAddr(addrStr string) (*Addr, error) {
-	pats := []string{
+	mats := []AddrMatcher{
 		// https://github.com/pocke/get
 		// https://github.com/pocke/get.git
-		`^https://([^/]+)/([^/]+)/([^/]+?)(?:\.git)?$`,
+		{`^https://([^/]+)/([^/]+)/([^/]+?)(?:\.git)?$`, 1, 2, 3},
 		// git@github.com:pocke/get.git
-		`^git\@([^:]+):([^/]+)/(.+)\.git$`,
+		{`^git\@([^:]+):([^/]+)/(.+)\.git$`, 1, 2, 3},
 		// github.com/pocke/get
-		`^([^/]+)/([^/]+)/([^/]+)$`,
+		{`^([^/]+)/([^/]+)/([^/]+)$`, 1, 2, 3},
 	}
-	for _, p := range pats {
-		re := regexp.MustCompile(p)
-		ma := re.FindStringSubmatch(addrStr)
-		if len(ma) == 0 {
+	for _, m := range mats {
+		addr := m.Parse(addrStr)
+		if addr == nil {
 			continue
 		}
-
-		return &Addr{
-			Host:     ma[1],
-			User:     ma[2],
-			RepoName: ma[3],
-		}, nil
+		return addr, nil
 	}
 
 	return nil, fmt.Errorf("Can't parse %s as address", addrStr)
@@ -154,4 +148,32 @@ func includeString(s []string, t string) bool {
 		}
 	}
 	return false
+}
+
+type AddrMatcher struct {
+	Pattern     string
+	HostIdx     int
+	UserIdx     int
+	RepoNameIdx int
+}
+
+func (m *AddrMatcher) Parse(addrStr string) *Addr {
+	re := regexp.MustCompile(m.Pattern)
+	ma := re.FindStringSubmatch(addrStr)
+	if len(ma) == 0 {
+		return nil
+	}
+
+	addr := new(Addr)
+	if m.HostIdx >= 0 {
+		addr.Host = ma[m.HostIdx]
+	}
+	if m.UserIdx >= 0 {
+		addr.User = ma[m.UserIdx]
+	}
+	if m.RepoNameIdx >= 0 {
+		addr.RepoName = ma[m.RepoNameIdx]
+	}
+
+	return addr
 }
