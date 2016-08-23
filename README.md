@@ -43,6 +43,11 @@ $ get go https://github.com/pocke/get
 $ get ghq github.com/pocke/get.git
 ```
 
+Links
+-------
+
+- [go get / ghq get でのアドレス形式の違いから人類を解放した - pockestrap](http://pocke.hatenablog.com/entry/2016/08/22/170516)
+
 License
 -------
 
