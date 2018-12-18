@@ -31,17 +31,19 @@ func Main(args []string) error {
 }
 
 type CmdArg struct {
-	Name    string // get
-	Debug   bool
-	Shallow bool
-	Type    string   // go or ghq
-	Args    []string // [-u github.com/pocke/get]
+	Name      string // get
+	Debug     bool
+	Shallow   bool
+	Unshallow bool
+	Type      string   // go or ghq
+	Args      []string // [-u github.com/pocke/get]
 }
 
 func ParseCmdArg(args []string) (*CmdArg, error) {
 	cmdArg := new(CmdArg)
 	fs := flag.NewFlagSet("get", flag.ContinueOnError)
 	fs.BoolVar(&cmdArg.Shallow, "shallow", false, "Shallow clone")
+	fs.BoolVar(&cmdArg.Unshallow, "unshallow", false, "Make the repository unshallow after cloned")
 	fs.BoolVar(&cmdArg.Debug, "debug", false, "Debug mode")
 	fs.Parse(args[1:])
 	cmdArg.Name = args[0]
@@ -64,11 +66,13 @@ var Getters = map[string]func(opt *CmdArg) error{
 		if opt.Shallow {
 			args = append(args, "--shallow")
 		}
+		addrs := make([]*Addr, 0, len(opt.Args))
 		for _, a := range opt.Args {
 			addr, err := ParseAddr(a)
 			if err != nil {
 				args = append(args, a)
 			} else {
+				addrs = append(addrs, addr)
 				args = append(args, addr.ToSSH())
 			}
 		}
@@ -80,7 +84,23 @@ var Getters = map[string]func(opt *CmdArg) error{
 		if opt.Debug {
 			fmt.Println(strings.Join(c.Args, " "))
 		}
-		return c.Run()
+		err := c.Run()
+		if opt.Unshallow {
+			for _, addr := range addrs {
+				b, err := exec.Command("ghq", "list", "-e", "-p", addr.ToGoStyle()).Output()
+				if err != nil {
+					return err
+				}
+
+				unshallowCmd := exec.Command("git", "fetch", "--unshallow")
+				unshallowCmd.Dir = strings.TrimRight(string(b), "\n")
+				err = unshallowCmd.Start()
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return err
 	},
 	"go": func(opt *CmdArg) error {
 		args := []string{"get"}
