@@ -3,10 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 func main() {
@@ -17,7 +20,16 @@ func main() {
 }
 
 func Main(args []string) error {
-	c, err := ParseCmdArg(args)
+	configArgs, err := LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	args2 := []string{args[0]}
+	args2 = append(args2, configArgs...)
+	args2 = append(args2, args[1:]...)
+
+	c, err := ParseCmdArg(args2)
 	if err != nil {
 		return err
 	}
@@ -37,6 +49,22 @@ type CmdArg struct {
 	Unshallow bool
 	Type      string   // go or ghq
 	Args      []string // [-u github.com/pocke/get]
+}
+
+func LoadConfig() ([]string, error) {
+	confPath, err := homedir.Expand("~/.config/get/args")
+	if err != nil {
+		return nil, err
+	}
+	if !FileExists(confPath) {
+		return []string{}, nil
+	}
+	b, err := ioutil.ReadFile(confPath)
+	if err != nil {
+		return nil, err
+	}
+	return strings.Split(strings.TrimRight(string(b), "\n"), " "), nil
+
 }
 
 func ParseCmdArg(args []string) (*CmdArg, error) {
@@ -200,4 +228,9 @@ func (m *AddrMatcher) Parse(addrStr string) *Addr {
 	}
 
 	return addr
+}
+
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
 }
