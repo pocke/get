@@ -43,6 +43,27 @@ $ get go https://github.com/pocke/get
 $ get ghq github.com/pocke/get.git
 ```
 
+Advanced Usage
+---
+
+`Get` supports `-shallow` and `-unshallow` options. They work with `ghq`. `Get` just ignores them with `go`.
+
+When `-shallow` option is given, `get` clones the specified repository shallowly.
+When `-unshallow` option is given, `get` executes `git fetch --unshallow` asynchronously.
+
+They improves cloning speed. If you specify `-shallow` and `-unshallow`, you can clone repository faster, and get whole repository after a while.
+For example:
+
+```bash
+$ get -shallow -unshallow ghq https://github.com/pocke/get
+```
+
+If you'd like to enable this feature by default, put a config file to `~/.config/get/args` with the below content.
+
+```
+-shallow -unshallow
+```
+
 Links
 -------
 
