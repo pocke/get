@@ -16,7 +16,10 @@ func TestParseCmdArg_Simple(t *testing.T) {
 		t.Errorf("Name should be `get`, but got %s", c.Name)
 	}
 	if c.Debug {
-		t.Errorf("Options should be empty, but got %v", c.Debug)
+		t.Errorf("Debug should be false, but got %v", c.Debug)
+	}
+	if c.Shallow {
+		t.Errorf("Shallow should be false, but got %v", c.Shallow)
 	}
 	if c.Type != "go" {
 		t.Errorf("Type should be `go`, but got %s", c.Type)
@@ -37,7 +40,10 @@ func TestParseCmdArg_DebugOption(t *testing.T) {
 		t.Errorf("Name should be `get`, but got %s", c.Name)
 	}
 	if !c.Debug {
-		t.Errorf("Options should be empty, but got %v", c.Debug)
+		t.Errorf("Debug should be true, but got %v", c.Debug)
+	}
+	if c.Shallow {
+		t.Errorf("Shallow should be false, but got %v", c.Shallow)
 	}
 	if c.Type != "go" {
 		t.Errorf("Type should be `go`, but got %s", c.Type)
@@ -58,12 +64,39 @@ func TestParseCmdArg_UpdateOption(t *testing.T) {
 		t.Errorf("Name should be `get`, but got %s", c.Name)
 	}
 	if !c.Debug {
-		t.Errorf("Options should be empty, but got %v", c.Debug)
+		t.Errorf("Debug should be true, but got %v", c.Debug)
+	}
+	if c.Shallow {
+		t.Errorf("Shallow should be false, but got %v", c.Shallow)
 	}
 	if c.Type != "go" {
 		t.Errorf("Type should be `go`, but got %s", c.Type)
 	}
 	if !reflect.DeepEqual(c.Args, []string{"-u", "github.com/pocke/get"}) {
+		t.Errorf("Args should have some args, but got %v", c.Args)
+	}
+}
+
+func TestParseCmdArg_ShallowOption(t *testing.T) {
+	args := []string{"get", "--shallow", "go", "github.com/pocke/get"}
+	c, err := ParseCmdArg(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if c.Name != "get" {
+		t.Errorf("Name should be `get`, but got %s", c.Name)
+	}
+	if c.Debug {
+		t.Errorf("Debug should be false, but got %v", c.Debug)
+	}
+	if !c.Shallow {
+		t.Errorf("Shallow should be true, but got %v", c.Shallow)
+	}
+	if c.Type != "go" {
+		t.Errorf("Type should be `go`, but got %s", c.Type)
+	}
+	if !reflect.DeepEqual(c.Args, []string{"github.com/pocke/get"}) {
 		t.Errorf("Args should have some args, but got %v", c.Args)
 	}
 }

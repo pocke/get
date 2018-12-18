@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -26,46 +27,44 @@ func Main(args []string) error {
 		return fmt.Errorf("Type %s doesn't exist", c.Type)
 	}
 
-	return fn(c.Args, c.Debug)
+	return fn(c)
 }
 
 type CmdArg struct {
-	Name  string // get
-	Debug bool
-	Type  string   // go or ghq
-	Args  []string // [-u github.com/pocke/get]
+	Name    string // get
+	Debug   bool
+	Shallow bool
+	Type    string   // go or ghq
+	Args    []string // [-u github.com/pocke/get]
 }
 
 func ParseCmdArg(args []string) (*CmdArg, error) {
-	if len(args) < 3 {
-		return nil, fmt.Errorf("Too few arguments. Please `get [-d] TYPE ADDR ...`")
-	}
 	cmdArg := new(CmdArg)
+	fs := flag.NewFlagSet("get", flag.ContinueOnError)
+	fs.BoolVar(&cmdArg.Shallow, "shallow", false, "Shallow clone")
+	fs.BoolVar(&cmdArg.Debug, "debug", false, "Debug mode")
+	fs.Parse(args[1:])
 	cmdArg.Name = args[0]
 
-	typeIdx := 0
-	for idx, v := range args[1:] {
-		if strings.HasPrefix(v, "-") {
-			continue
-		}
-		typeIdx = idx + 1
-		break
+	parsedArgs := fs.Args()
+
+	if len(parsedArgs) == 0 {
+		return nil, fmt.Errorf("Too few arguments. Please `get [-d] TYPE ADDR ...`")
 	}
-	// TODO: check index
 
-	opts := args[1:typeIdx]
-	cmdArg.Debug = includeString(opts, "-d") || includeString(opts, "--debug")
-
-	cmdArg.Type = args[typeIdx]
-	cmdArg.Args = args[typeIdx+1:]
+	cmdArg.Type = parsedArgs[0]
+	cmdArg.Args = parsedArgs[1:]
 
 	return cmdArg, nil
 }
 
-var Getters = map[string]func(addrs []string, debug bool) error{
-	"ghq": func(addrs []string, debug bool) error {
+var Getters = map[string]func(opt *CmdArg) error{
+	"ghq": func(opt *CmdArg) error {
 		args := []string{"get"}
-		for _, a := range addrs {
+		if opt.Shallow {
+			args = append(args, "--shallow")
+		}
+		for _, a := range opt.Args {
 			addr, err := ParseAddr(a)
 			if err != nil {
 				args = append(args, a)
@@ -78,14 +77,14 @@ var Getters = map[string]func(addrs []string, debug bool) error{
 		c.Stdin = os.Stdin
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
-		if debug {
+		if opt.Debug {
 			fmt.Println(strings.Join(c.Args, " "))
 		}
 		return c.Run()
 	},
-	"go": func(addrs []string, debug bool) error {
+	"go": func(opt *CmdArg) error {
 		args := []string{"get"}
-		for _, a := range addrs {
+		for _, a := range opt.Args {
 			addr, err := ParseAddr(a)
 			if err != nil {
 				args = append(args, a)
@@ -97,7 +96,7 @@ var Getters = map[string]func(addrs []string, debug bool) error{
 		c.Stdin = os.Stdin
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
-		if debug {
+		if opt.Debug {
 			fmt.Println(strings.Join(c.Args, " "))
 		}
 		return c.Run()
