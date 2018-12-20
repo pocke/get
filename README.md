@@ -68,6 +68,8 @@ Links
 -------
 
 - [go get / ghq get でのアドレス形式の違いから人類を解放した - pockestrap](http://pocke.hatenablog.com/entry/2016/08/22/170516)
+- [git: shallow cloneしてすぐunshallowする - pockestrap](https://pocke.hatenablog.com/entry/2018/12/19/015644)
+
 
 License
 -------
