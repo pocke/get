@@ -113,6 +113,9 @@ var Getters = map[string]func(opt *CmdArg) error{
 			fmt.Println(strings.Join(c.Args, " "))
 		}
 		err := c.Run()
+		if err != nil {
+			return err
+		}
 		if opt.Unshallow {
 			for _, addr := range addrs {
 				b, err := exec.Command("ghq", "list", "-e", "-p", addr.ToGoStyle()).Output()
@@ -128,7 +131,7 @@ var Getters = map[string]func(opt *CmdArg) error{
 				}
 			}
 		}
-		return err
+		return nil
 	},
 	"go": func(opt *CmdArg) error {
 		args := []string{"get"}
